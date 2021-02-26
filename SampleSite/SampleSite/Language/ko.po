@@ -1,0 +1,61 @@
+﻿# ↓ システム共通文言
+
+msgid "Above Beyond Project Framework"
+msgstr "새로운 프레임 워크 개발"
+
+msgid "Account"
+msgstr "로그인 사용자："
+
+msgid "SignOut"
+msgstr "로그 아웃"
+
+msgid "EditProfile"
+msgstr "프로필 편집"
+
+msgid "SignIn"
+msgstr "로그인"
+
+msgid "Language:"
+msgstr "언어："
+
+# ↑ システム共通文言
+
+
+# ↓ メニュー表題
+
+msgid "Portal"
+msgstr "문"
+
+msgid "SearchSample"
+msgstr "샘플 검색"
+
+# ↑ メニュー表題
+
+
+# ↓ ポータルで使用する文言
+
+msgid "PortalContentsMessage"
+msgstr "개발중인 샘플입니다."
+
+msgid "ControllerMessage"
+msgstr "컨트롤러로 변환 한 문구"
+
+msgid "ViewMessage"
+msgstr "보기에서 변환 한 문구"
+
+# ↑ ポータルで使用する文言
+
+# ↓ エラーメッセージ文言
+
+msgid "E00000"
+msgstr "No Message Error."
+
+msgid "E00001"
+msgstr "{0} field is required."
+
+msgid "E00002"
+msgstr "{0} field is {1} digits or less."
+
+# ↑ エラーメッセージ文言
+
+

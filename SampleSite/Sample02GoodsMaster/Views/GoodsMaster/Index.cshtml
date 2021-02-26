@@ -1,0 +1,356 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
+
+@{
+    ViewData["Title"] = @Localizer["GoodsMaster"];
+}
+
+@section Head{
+
+}
+
+
+<h1>@ViewData["Title"]</h1>
+
+<div id="vueAppMain">
+    <p>
+        @Localizer["GoodsMaster"]
+        :
+        <input v-model="searchGoodsCd" /><button @@click="this.getResultJson">@Localizer["Search"]</button>{{ resultJson }}
+        <button @@click="this.openInsertForm">@Localizer["New"]</button>
+    </p>
+    <div id="theGrid"></div>
+    <div v-show="insertForm">
+        <p>@Localizer["GoodsCd"] : <input v-model="goodsCd1" /> 必須、13桁以内</p>
+        <p>@Localizer["GoodsEnm"] : <input v-model="goodsEnm1" /> 必須、250桁以内</p>
+        <p>@Localizer["NetWeight"] : <input v-model="netWeight1" /> 任意、数値</p>
+        <p>
+            @Localizer["PgKbn"] : <select v-model="pgKbn1">
+                <option v-for="option in pgKbnOptions" v-bind:value="option.id" v-bind:key="option.id">
+                    {{ option.id }}:{{ option.name }}
+                </option>
+            </select>
+        </p>
+        <p>
+            @Localizer["FpointUnitKbn"] : <select size="3" v-model="fpointUnitKbn1">
+                <option v-for="option in fpointUnitKbnOptions" v-bind:value="option.id" v-bind:key="option.id">
+                    {{ option.id }}:{{ option.name }}
+                </option>
+            </select>
+        </p>
+        <p>
+            @Localizer["NosFlg"] : <input type="checkbox" id="nosFlg1" v-model="nosFlg1">
+            <label for="nosFlg1">{{ nosFlg1 }}</label>
+        </p>
+        <p>
+            @Localizer["MpFlg"] :
+            <input type="radio" id="mpFlg1One" value="1" v-model="mpFlg1">
+            <label for="mpFlg1One">One</label>
+            <input type="radio" id="mpFlg1Two" value="2" v-model="mpFlg1">
+            <label for="mpFlg1Two">Two</label>
+        </p>
+        <p>@Localizer["SysEntDate"] : <div id="sysEntDate1"></div> 任意、日付</p>
+        <p><button @@click="this.Insert">@Localizer["Insert"]</button></p>
+    </div>
+    <div v-show="updateForm">
+        <p>@Localizer["GoodsCd"] : <input readonly v-model="goodsCd2" /></p>
+        <p>@Localizer["GoodsEnm"] : <input v-model="goodsEnm2" /> 必須、250桁以内</p>
+        <p>@Localizer["NetWeight"] : <input v-model="netWeight2" /> 任意、数値</p>
+        <p>
+            @Localizer["PgKbn"] : <select v-model="pgKbn2">
+                <option v-for="option in pgKbnOptions" v-bind:value="option.id" v-bind:key="option.id">
+                    {{ option.id }}:{{ option.name }}
+                </option>
+            </select>
+        </p>
+        <p>
+            @Localizer["FpointUnitKbn"] : <select size="3" v-model="fpointUnitKbn2">
+                <option v-for="option in fpointUnitKbnOptions" v-bind:value="option.id" v-bind:key="option.id">
+                    {{ option.id }}:{{ option.name }}
+                </option>
+            </select>
+        </p>
+        <p>
+            @Localizer["NosFlg"] : <input type="checkbox" id="nosFlg2" v-model="nosFlg2">
+            <label for="nosFlg2">{{ nosFlg2 }}</label>
+        </p>
+        <p>
+            @Localizer["MpFlg"] :
+            <input type="radio" id="mpFlg2One" value="1" v-model="mpFlg2">
+            <label for="mpFlg2One">One</label>
+            <input type="radio" id="mpFlg2Two" value="2" v-model="mpFlg2">
+            <label for="mpFlg2Two">Two</label>
+        </p>
+        <p>@Localizer["SysEntDate"] : <div id="sysEntDate2"></div> 任意、日付</p>
+        <p>
+            <button @@click="this.Update">@Localizer["Update"]</button>
+            <button @@click="this.Delete">@Localizer["Delete"]</button>
+        </p>
+    </div>
+</div>
+
+@section Scripts {
+    <script type="text/javascript">
+        // グリッドのカラム指定
+        var columns = [
+            { binding: 'goodsCd', header: '@Localizer["GoodsCd"]' },
+            { binding: 'goodsEnm', header: '@Localizer["GoodsEnm"]' },
+            { binding: 'netWeight', header: '@Localizer["NetWeight"]', align: "right" },
+            { binding: 'pgKbn', header: '@Localizer["PgKbn"]', align: "center" },
+            { binding: 'fpointUnitKbn', header: '@Localizer["FpointUnitKbn"]', align: "center" },
+            { binding: 'nosFlg', header: '@Localizer["NosFlg"]', align: "center" },
+            { binding: 'mpFlg', header: '@Localizer["MpFlg"]', align: "center" },
+            { binding: 'sysEntDate', header: '@Localizer["SysEntDate"]', align: "center" },
+            {
+                // カスタムセルでボタン表示
+                header: '@Localizer["Detail"]',
+                cellTemplate: wijmo.grid.cellmaker.CellMaker.makeButton({
+                    text: '@Localizer["Detail"]', // バインドされたテキストをオーバーライドします。
+                    click: (e, ctx) => {
+                        // 選択行を画面に反映
+                        vueAppMain.insertForm = false;
+                        vueAppMain.updateForm = true;
+                        vueAppMain.goodsCd2 = ctx.item.goodsCd;
+                        vueAppMain.goodsCd2 = ctx.item.goodsCd;
+                        vueAppMain.goodsEnm2 = ctx.item.goodsEnm;
+                        vueAppMain.netWeight2 = ctx.item.netWeight;
+                        vueAppMain.pgKbn2 = ctx.item.pgKbn;
+                        vueAppMain.fpointUnitKbn2 = ctx.item.fpointUnitKbn;
+                        vueAppMain.nosFlg2 = ctx.item.nosFlg == "1" ? true : false;
+                        vueAppMain.mpFlg2 = ctx.item.mpFlg;
+                        sysEntDate2.value = ctx.item.sysEntDate;
+                    }
+                })
+            },
+        ];
+        var grid;
+        var sysEntDate1;
+        var sysEntDate2;
+
+        document.readyState === 'complete' ? init() : window.onload = init;
+
+        function init() {
+            // グリッドの初期処理
+            grid = new wijmo.grid.FlexGrid(
+                "#theGrid",
+                {
+                    autoGenerateColumns: false,
+                    allowSorting: false,
+                    showSort: false,
+                    headersVisibility: 'Column',
+                    columns: columns,
+                    itemsSource: [],
+                }
+            );
+            sysEntDate1 = new wijmo.input.InputDate(
+                "#sysEntDate1",
+                {
+                    format:"yyyy/MM/dd"
+                }
+            );
+            sysEntDate2 = new wijmo.input.InputDate(
+                "#sysEntDate2",
+                {
+                    format: "yyyy/MM/dd"
+                }
+            );
+        }
+
+        const myMixin = {
+            data() {
+                return {
+                    searchGoodsCd: '',
+                    resultJson: ''
+                }
+            },
+            methods: {
+                initDate: function (date) {
+                    this.theDate = date;
+                },
+                // ボタンクリック時に行のデータを表示します。
+                getResultJson() {
+                    this.insertForm = false;
+                    this.updateForm = false;
+                    this.resultJson = '問合せ中';
+
+                    // POSTするパラメータは手動設定
+                    let params = new URLSearchParams();
+                    params.append('searchGoodsCd', this.searchGoodsCd);
+
+                    // Get実行
+                    axios.get('/Api/GoodsMasterAPI/' + this.searchGoodsCd)
+                        .then(response => {
+                            this.resultJson = response.data.length + '件';
+                            ConvertResponse(response.data);
+                            grid.itemsSource = response.data;
+                        })
+                        .catch(error => {
+                            this.resultJson = 'APIエラー：' + error;
+                        })
+                },
+                // ボタンクリック時にInsertFormを表示します。
+                openInsertForm() {
+                    this.insertForm = true;
+                    this.updateForm = false;
+                },
+                // 登録
+                Insert() {
+                    this.resultJson = '';
+                    /*
+                    if (this.checkForm()) {
+                        return 0;
+                    }
+                    */
+                    let axiosConfig = {
+                        headers: {
+                            'accept': 'text/plain',
+                            'Content-Type': 'application/json;charset=UTF-8',
+                        }
+                    };
+
+                    // データ取得
+                    const data = {
+                        "goodsCd": this.goodsCd1,
+                        "goodsEnm": this.goodsEnm1,
+                        "netWeight": this.netWeight1,
+                        "pgKbn": this.pgKbn1,
+                        "fpointUnitKbn": this.fpointUnitKbn1,
+                        "nosFlg": this.nosFlg1 ? "1" : "0",
+                        "mpFlg": this.mpFlg1,
+                        "sysEntDate": "" + DateToYYYYMMDD(sysEntDate1.value),
+                    }
+
+                    this.resultJson = '問合せ中(Post)';
+                    // POST実行
+                    axios.post('/api/GoodsMasterAPI', data, axiosConfig)
+                        .then(response => {
+                            this.resultJson = response.data + '件登録しました';
+                            this.getResultJson();
+                        })
+                        .catch(error => {
+                            console.log(JSON.stringify(error.data.errors));
+                            this.resultJson = 'Rest Api Error Return Code： ' + error.data.status;
+                            this.errors = error.data.errors;
+                        })
+                },
+                // 更新
+                Update() {
+                    this.resultJson = '';
+                    /*
+                    if (this.checkForm()) {
+                        return 0;
+                    }
+                    */
+                    let axiosConfig = {
+                        headers: {
+                            'accept': 'text/plain',
+                            'Content-Type': 'application/json;charset=UTF-8',
+                        }
+                    };
+
+                    // データ取得
+                    const data = {
+                        "goodsCd": this.goodsCd2,
+                        "goodsEnm": this.goodsEnm2,
+                        "netWeight": this.netWeight2,
+                        "pgKbn": this.pgKbn2,
+                        "fpointUnitKbn": this.fpointUnitKbn2,
+                        "nosFlg": this.nosFlg2 ? "1" : "0",
+                        "mpFlg": this.mpFlg2,
+                        "sysEntDate": "" + DateToYYYYMMDD(sysEntDate2.value),
+                    }
+
+                    this.resultJson = '問合せ中(Put)';
+                    // Put実行
+                    axios.put('/api/GoodsMasterAPI', data, axiosConfig)
+                        .then(response => {
+                            this.resultJson = response.data + '件更新しました';
+                            this.getResultJson();
+                        })
+                        .catch(error => {
+                            console.log(JSON.stringify(error.data.errors));
+                            this.resultJson = 'Rest Api Error Return Code： ' + error.data.status;
+                            this.errors = error.data.errors;
+                        })
+                },
+                // 削除
+                Delete() {
+                    this.resultJson = '';
+                    /*
+                    if (this.checkForm()) {
+                        return 0;
+                    }
+                    */
+
+                    this.resultJson = '問合せ中(Delete)';
+                    // Delete実行
+                    axios.delete('/api/GoodsMasterAPI/' + this.goodsCd2)
+                        .then(response => {
+                            this.resultJson = response.data + '件削除しました';
+                            this.getResultJson();
+                        })
+                        .catch(error => {
+                            console.log(JSON.stringify(error.data.errors));
+                            this.resultJson = 'Rest Api Error Return Code： ' + error.data.status;
+                            this.errors = error.data.errors;
+                        })
+                },
+            },
+        }
+
+        vueAppMainMixinArray.push(myMixin);
+
+        const vueAppMain = Vue.createApp({
+            mixins: vueAppMainMixinArray,
+            data() {
+                return {
+                    // 画面コントロール一覧
+                    insertForm: false,
+                    updateForm: false,
+                    goodsCd1: "",
+                    goodsEnm1: "",
+                    newWeight1: "",
+                    sysEntDate1: "",
+                    goodsCd2: "",
+                    goodsEnm2: "",
+                    newWeight2: "",
+                    sysEntDate2: "",
+                    pgKbn1: "",
+                    pgKbn2: "",
+                    pgKbnOptions: [
+                        { id: "1", name: '夏目漱石' },
+                        { id: "2", name: '太宰治' },
+                        { id: "3", name: '村上春樹' }
+                    ],
+                    fpointUnitKbn1: "",
+                    fpointUnitKbn2: "",
+                    fpointUnitKbnOptions: [
+                        { id: "A", name: 'ユニットＡ' },
+                        { id: "X", name: 'ユニットＸ' },
+                        { id: "Z", name: 'ユニットＺ' }
+                    ],
+                    nosFlg1: "",
+                    nosFlg2: "",
+                    mpFlg1: "",
+                    mpFlg2: "",
+                }
+            },
+            created() {
+            }
+        }).mount('#vueAppMain');
+
+        // JavaScript関数
+
+        // データ内のYYYYMMDDを日付に変換
+        function ConvertResponse(data) {
+            try {
+                for (let i = 0; i < data.length; i++) {
+                    data[i].sysEntDate = YYYYMMDDToDate(data[i].sysEntDate);
+                }
+            }
+            catch (e) {
+                console.error(e.toString());
+            }
+        }
+    </script>
+}

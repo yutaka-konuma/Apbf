@@ -1,0 +1,61 @@
+﻿# ↓ システム共通文言
+
+msgid "Above Beyond Project Framework"
+msgstr "新框架开发"
+
+msgid "Account"
+msgstr "登录用户："
+
+msgid "SignOut"
+msgstr "登出"
+
+msgid "EditProfile"
+msgstr "编辑个人资料"
+
+msgid "SignIn"
+msgstr "登入"
+
+msgid "Language:"
+msgstr "语言："
+
+# ↑ システム共通文言
+
+
+# ↓ メニュー表題
+
+msgid "Portal"
+msgstr "门户网站"
+
+msgid "SearchSample"
+msgstr "搜索样品"
+
+# ↑ メニュー表題
+
+
+# ↓ ポータルで使用する文言
+
+msgid "PortalContentsMessage"
+msgstr "这是一个正在开发的示例。"
+
+msgid "ControllerMessage"
+msgstr "控制器转换的文字"
+
+msgid "ViewMessage"
+msgstr "措辞转换为视图"
+
+# ↑ ポータルで使用する文言
+
+
+# ↓ エラーメッセージ文言
+
+msgid "E00000"
+msgstr "No Message Error."
+
+msgid "E00001"
+msgstr "{0} field is required."
+
+msgid "E00002"
+msgstr "{0} field is {1} digits or less."
+
+# ↑ エラーメッセージ文言
+

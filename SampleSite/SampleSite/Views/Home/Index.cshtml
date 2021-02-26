@@ -1,0 +1,334 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
+@* ↑ Localizer ： 翻訳用のオブジェクト *@
+
+@{ ViewData["Title"] = @Localizer["Portal"];}
+
+@section Head{
+
+
+}
+
+<h1>多言語対応サンプル</h1>
+<h1>@Localizer["Above Beyond Project Framework"] @ViewData["Title"]</h1>
+<h2>@Localizer["PortalContentsMessage"]</h2>
+<h3>@Localizer["ViewMessage"]</h3>
+<h3>@ViewData["Message"]</h3>
+
+<hr />
+
+<div id="vueAppMain">
+    <p>入力チェックサンプル</p>
+    <p>郵便番号<input v-model="searchPostCd" /> 必須、7桁以内</p>
+    <p>都道府県<input v-model="searchCountry" /> 必須、10桁以内 ※入力チェックのみで抽出はされません</p>
+    <p>市区町村<input v-model="searchCity" /> 任意、20桁以内 ※入力チェックのみで抽出はされません</p>
+    <p>住所<input v-model="searchAddress" /> 任意、20桁以内 ※入力チェックのみで抽出はされません</p>
+
+    <button @@click="this.getWebApiGet">RestApi検索(GET PostCd)</button> : RESR API GET 郵便番号指定検索（クライアント・サーバ共にノーチェック）
+    <br />
+    <br />
+    <button @@click="this.getWebApiPost">RestApi検索1(POST Form)</button> : RESR API POST 郵便番号指定検索（クライアントチェック）
+    <br />
+    <br />
+    <button @@click="this.getWebApiPost2">RestApi検索2(POST Form)</button> : RESR API POST 郵便番号指定検索（クライアントノーチェック）
+    <br />
+    {{ resultJson }}
+
+    <p>
+        <ul id="error-list">
+            <li v-for="err in errors">{{ err }}</li>
+        </ul>
+    </p>
+
+    <div id="theGrid"></div>
+
+</div>
+
+<button id="btnPopup" class="btn btn-primary">
+    ポップアップ（入力フォーム）
+</button>
+<form id="frmPopup">
+    <h4 class="modal-header">
+        ポップフォームのアップサンプル
+        <button type="button" tabindex="-1" class="close wj-hide">&times;</button>
+    </h4>
+    <div class="modal-body">
+        <label>
+            入力項目１:
+            <input class="form-control" required type="text" />
+        </label>
+        <br />
+        <label>
+            入力項目２:
+            <input class="form-control" required type="email" />
+        </label>
+        <br />
+        <label>
+            入力項目３:
+            <input class="form-control" required type="number" />
+        </label>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-primary" type="submit">
+            送信
+        </button>
+    </div>
+</form>
+
+<button id="btnDialog" class="btn btn-primary">ポップアップ（文言表示ダイアログ）</button>
+
+
+
+
+@section Scripts {
+    <script type="text/javascript">
+
+        // ↓ Wijimo FlexGrid の 準備
+        var grid;
+
+        // Wijimo FlexGrid の 列定義
+        var columns = [
+            { binding: 'postCd', header: '郵便番号' },
+            { binding: 'country', header: '都道府県' },
+            { binding: 'city', header: '市区町村' },
+            { binding: 'address', header: '住所' }
+        ];
+
+        // 読み込み完了時に Wijimo FlexGrid 作成
+        document.readyState === 'complete' ? init() : window.onload = init;
+        function init() {
+            grid = new wijmo.grid.FlexGrid(
+                "#theGrid",
+                {
+                    autoGenerateColumns: false,
+                    allowSorting: false,
+                    showSort: false,
+                    headersVisibility: 'Column',
+                    columns: columns, // 列定義指定
+                    itemsSource: [], // 初期データなし
+                }
+            );
+
+            let frmPopup = new wijmo.input.Popup('#frmPopup')
+            document.querySelector('#btnPopup').addEventListener('click', () => {
+                frmPopup.show(true, (sender) => {
+                    switch (sender.dialogResult) {
+                        case 'submit':
+                            console.debug(sender);
+                            break;
+                    }
+                });
+            });
+
+            document.querySelector('#btnDialog').addEventListener('click', () => {
+                alertPopup('タイトル',
+                    'ダイアログに表示するメッセージ',
+                    result => alert('ダイアログを閉じたアクション : ' + result)
+                );
+            });
+
+        }
+
+        // alert popup
+        function alertPopup(title, message, callback) {
+            let dialog = createDialog({
+                title: title,
+                message: message,
+            });
+            let popup = new wijmo.input.Popup(dialog);
+            //
+            popup.show(true, (sender) => {
+                if (callback) {
+                    callback(sender.dialogResult);
+                }
+            });
+        }
+        // create dialog to use as an alert or prompt
+        function createDialog(options, input = false) {
+            // create dialog
+            let template = '<div class="modal-dialog" role="dialog">' +
+                '<div class="modal-header">' +
+                '<h4>{title}</h4>' +
+                '</div>' +
+                '<div class="modal-body">' +
+                '<p>{message}</p>' +
+                '</div>' +
+                '<div class="modal-footer">' +
+                '<button class="btn btn-primary wj-hide-ok">はい</button>' +
+                '<button class="btn btn-default wj-hide">いいえ</button>' +
+                '</div>' +
+                '</div>';
+            //
+            let dialog = wijmo.createElement(wijmo.format(template, options));
+
+            dialog.style.width = '40%';
+
+            return dialog;
+        }
+
+        // Vue.js による 検索領域作成と検索処理（Wijimo FlexGridへのデータ設定）
+        const myMixin = {
+            // ↓ thsi.～ で使用するVue用変数と初期値
+            data() {
+                return {
+                    searchPostCd: '270',
+                    searchCountry: '千葉県',
+                    searchCity: '我孫子市',
+                    searchAddress: '〇〇',
+                    resultJson: '',
+                    errors: []
+                }
+            },
+            // ↓ Vue.js で使用する関数
+            methods: {
+                checkForm: function() {
+                    this.errors = [];
+                    if (this.searchPostCd === null || this.searchPostCd === undefined || this.searchPostCd === '' || this.searchPostCd.lenght === 0) {
+
+                        @{
+                            var msg = "";
+                            var LocalizMessageDic = (Dictionary<string, string>)ViewData["LocalizMessageDic"];
+
+                            // "E00001" = '{0} field is required.'
+                            msg = string.Format(LocalizMessageDic["E00001"], new string[] { Localizer["Zip Code"].Value });
+                        }
+                            this.errors.push('@msg');
+                    } else {
+                        if (this.searchPostCd.length > 7) {
+                        @{
+                            // "E00002" = '{0} field is {1} digits or less.'
+                            msg = string.Format(LocalizMessageDic["E00002"], new string[] { Localizer["Zip Code"].Value, "7" });
+                        }
+                            this.errors.push('@msg');
+                        }
+                    }
+
+                    console.log(JSON.stringify(this.errors));
+
+                    if (this.errors.length > 0) {
+                        return true;
+                    }
+                    else {
+                        return false;
+                    }
+
+                },
+                getWebApiGet() {
+                    if (this.checkForm()) {
+                        return 0;
+                    }
+
+                    this.resultJson = '問合せ中(Get)'
+
+                    // GET実行
+                    axios.get('/api/SearchSampleAPI/' + this.searchPostCd)
+                        .then(response => {
+                            // 業務エラー
+                            if (response.data.hasError) {
+                                // システム例外
+                                this.resultJson = 'APIエラー(業務)：' + response.data.errorMessage;
+                            }
+                            else {
+                                this.resultJson = response.data.searchSampleViewDataList.length + '件'
+                                grid.itemsSource = response.data.searchSampleViewDataList;
+                            }
+                        })
+                        .catch(error => {
+                            // システム例外
+                            this.resultJson = 'APIエラー(システム)：' + error
+                        })
+                },
+                getWebApiPost() {
+                    this.resultJson = ''
+
+                    if (this.checkForm()) {
+                        return 0;
+                    }
+
+                    let axiosConfig = {
+                        headers: {
+                            'accept': 'text/plain',
+                            'Content-Type': 'application/json;charset=UTF-8',
+                        }
+                    };
+
+                    const data = {
+                        "postcd": this.searchPostCd,
+                        "country": this.searchCountry,
+                        "city": this.searchCity,
+                        "address": this.searchAddress
+                    }
+
+                    this.resultJson = '問合せ中(Post)'
+                   // POST実行
+                    axios.post('/api/SearchSampleAPI', data, axiosConfig)
+                        .then(response => {
+                            // 業務エラー
+                            if (response.data.hasError) {
+                                // システム例外
+                                this.resultJson = 'APIエラー(業務)：' + response.data.errorMessage;
+                            }
+                            else {
+                                this.resultJson = response.data.searchSampleViewDataList.length + '件'
+                                grid.itemsSource = response.data.searchSampleViewDataList;
+                            }
+                        })
+                        .catch(error => {
+                            // システム例外
+                            this.resultJson = 'APIエラー(システム)：' + error
+                        })
+                },
+                getWebApiPost2() {
+                    this.resultJson = ''
+
+                    let axiosConfig = {
+                        headers: {
+                            'accept': 'text/plain',
+                            'Content-Type': 'application/json;charset=UTF-8',
+                        }
+                    };
+
+                    const data = {
+                        "postcd": this.searchPostCd,
+                        "country": this.searchCountry,
+                        "city": this.searchCity,
+                        "address": this.searchAddress
+                    }
+
+                    this.resultJson = '問合せ中(Post)'
+                    // POST実行
+                    axios.post('/api/SearchSampleAPI', data, axiosConfig)
+                        .then(response => {
+                            // 業務エラー
+                            if (response.data.hasError) {
+                                // システム例外
+                                this.resultJson = 'APIエラー(業務)：' + response.data.errorMessage;
+                            }
+                            else {
+                                this.resultJson = response.data.searchSampleViewDataList.length + '件'
+                                grid.itemsSource = response.data.searchSampleViewDataList;
+                            }
+                        })
+                        .catch(error => {
+                            // システム例外
+                            this.resultJson = 'APIエラー(システム)：' + error
+                        })
+                },
+            }
+        }
+
+        vueAppMainMixinArray.push(myMixin);
+
+
+        const vueAppMain = Vue.createApp({
+            mixins: vueAppMainMixinArray,
+            data() {
+                return {
+                }
+            },
+            created() {
+            }
+        }).mount('#vueAppMain')
+    </script>
+
+}

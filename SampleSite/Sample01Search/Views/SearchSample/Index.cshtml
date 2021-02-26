@@ -1,0 +1,97 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
+
+@{
+    ViewData["Title"] = @Localizer["SearchSample"];
+}
+
+@section Head{
+
+}
+
+
+<h1>@ViewData["Title"]</h1>
+
+<div id="vueAppMain">
+    <p>
+        @Localizer["SearchSample"]
+        :
+        <input v-model="searchWoard" /><button @@click="this.getResultJson">@Localizer["Search"]</button>{{ resultJson }}
+    </p>
+    <div id="theGrid"></div>
+</div>
+
+@section Scripts {
+    <script type="text/javascript">
+
+        var columns = [
+            { binding: 'postcd', header: '@Localizer["PostCd"]' },
+            { binding: 'country', header: '@Localizer["Country"]' },
+            { binding: 'city', header: '@Localizer["City"]' },
+            { binding: 'address', header: '@Localizer["Address"]' },
+        ];
+        var grid;
+
+        document.readyState === 'complete' ? init() : window.onload = init;
+
+        function init() {
+            grid = new wijmo.grid.FlexGrid(
+                "#theGrid",
+                {
+                    autoGenerateColumns: false,
+                    allowSorting: false,
+                    showSort: false,
+                    headersVisibility: 'Column',
+                    columns: columns,
+                    itemsSource: [],
+                }
+            );
+
+        }
+
+
+        const myMixin = {
+            data() {
+                return {
+                    searchWoard: '270',
+                    resultJson: ''
+                }
+            },
+            methods: {
+                getResultJson() {
+                    this.resultJson = '問合せ中'
+
+                    axios.get('api/SearchSampleAPI/' + this.searchWoard)
+                        .then(response => {
+                            // 業務エラー
+                            if (response.data.hasError) {
+                                // システム例外
+                                this.resultJson = 'APIエラー(業務)：' + response.data.errorMessage;
+                            }
+                            else {
+                                this.resultJson = response.data.searchSampleViewDataList.length + '件'
+                                grid.itemsSource = response.data.searchSampleViewDataList;
+                            }
+                        })
+                        .catch(error => {
+                            // システム例外
+                            this.resultJson = 'APIエラー(システム)：' + error
+                        })
+                },
+            }
+        }
+
+        vueAppMainMixinArray.push(myMixin);
+
+        const vueAppMain = Vue.createApp({
+            mixins: vueAppMainMixinArray,
+            data() {
+                return {
+                }
+            },
+            created() {
+            }
+        }).mount('#vueAppMain')
+    </script>
+
+}

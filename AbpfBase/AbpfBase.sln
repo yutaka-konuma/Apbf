@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30907.101
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AbpfBase", "AbpfBase\AbpfBase.csproj", "{9876CB0C-1C48-43B2-BDBB-BF7E3E4BFBDC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AbpfUtil", "..\AbpfUtil\AbpfUtil\AbpfUtil.csproj", "{5EE77137-A520-4B91-A7F6-18853BBD7576}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9876CB0C-1C48-43B2-BDBB-BF7E3E4BFBDC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9876CB0C-1C48-43B2-BDBB-BF7E3E4BFBDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9876CB0C-1C48-43B2-BDBB-BF7E3E4BFBDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9876CB0C-1C48-43B2-BDBB-BF7E3E4BFBDC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5EE77137-A520-4B91-A7F6-18853BBD7576}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5EE77137-A520-4B91-A7F6-18853BBD7576}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5EE77137-A520-4B91-A7F6-18853BBD7576}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5EE77137-A520-4B91-A7F6-18853BBD7576}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {46897130-A588-4461-99E2-6836D169711E}
+	EndGlobalSection
+EndGlobal

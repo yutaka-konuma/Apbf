@@ -1,0 +1,239 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
+
+@{
+    ViewData["Title"] = "チャットサンプル";
+}
+
+@section Head{
+
+}
+
+
+<h1>@ViewData["Title"]</h1>
+
+<div id="vueAppMain">
+    {{ resultJson }}
+    <div id="theGrid"></div>
+
+    <div id="theTabPanel">
+
+        <div>
+            <a>チャットルーム１</a>
+            <ul id="messagesList1"></ul>
+        </div>
+        <div>
+            <a>チャットルーム２</a>
+            <ul id="messagesList2"></ul>
+        </div>
+
+    </div>
+
+    <p>選択中の伝票番号：{{ selectChatGroupId }}</p>
+    <p>
+        投稿メッセージ：<input v-model="chatMessage" />
+        <button @@click="this.getSendMsgt">メッセージ投稿</button>
+    </p>
+
+</div>
+
+@section Scripts {
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
+    <script>
+
+        var columns = [
+            { binding: 'chatGroupId', header: 'グループId' },
+            { binding: 'chatGroupName', header: 'グループ名', width: 250, },
+            {
+                header: 'チャット',
+                cellTemplate: wijmo.grid.cellmaker.CellMaker.makeButton({
+                    text: 'チャット', // バインドされたテキストをオーバーライドします。
+                    click: (e, ctx) => {
+                        vueAppMain.joinGroup(ctx.item.chatGroupId);
+                    }
+                })
+            },
+        ];
+        var grid;
+        var tabPanel;
+        var chatGroupId;
+        var chatMessage;
+
+        document.readyState === 'complete' ? init() : window.onload = init;
+
+        function init() {
+            grid = new wijmo.grid.FlexGrid(
+                "#theGrid",
+                {
+                    autoGenerateColumns: false,
+                    allowSorting: false,
+                    showSort: false,
+                    headersVisibility: 'Column',
+                    columns: columns,
+                    itemsSource: [],
+                }
+            );
+
+            tabPanel = new wijmo.nav.TabPanel('#theTabPanel');
+
+            vueAppMain.getInitData();
+
+        }
+
+        const myMixin = {
+            data() {
+                return {
+                    selectChatGroupId: '',
+                    chatMessage: '',
+                    resultJson: ''
+                }
+            },
+            methods: {
+                getInitData() {
+                    this.resultJson = '初期データ取得中'
+
+                    // GET実行
+                    axios.get('/api/ChatSampleAPI/GetChatGroup/')
+                        .then(response => {
+                            this.resultJson = response.data.length + '件'
+                            grid.itemsSource = response.data;
+
+                            for (let i in response.data) {
+
+                                try {
+                                    // グループチャットの受信関数を登録
+                                    connection.on(("Send_" + response.data[i].chatGroupId), function (sendJson) {
+                                        // サーバよりプッシュされたグループチャットメッセージの受信
+                                        var ret = JSON.parse(sendJson);
+                                        var li = document.createElement("li");
+                                        li.textContent = ret.ChatText + '(' + ret.ChatUserName + ')';
+                                        document.getElementById(("messagesList" + ret.ChatGroupId)).appendChild(li);
+                                    });
+
+                                    // グループチャットの参加実施
+                                    connection.invoke("AddToGroup", response.data[i].chatGroupId);
+                                }
+                                catch (e) {
+                                    console.error(e.toString());
+                                }
+                                event.preventDefault();
+
+                                // 次のサーバ呼出（過去ログ取得）
+                                // GET実行
+                                axios.get('/api/ChatSampleAPI/GetChatLog/' + response.data[i].chatGroupId)
+                                    .then(response => {
+                                        for (let j in response.data) {
+
+                                            // サーバよりプッシュされたグループチャットメッセージの受信
+                                            var li = document.createElement("li");
+                                            li.textContent = response.data[j].chatText +
+                                                '(' + response.data[j].chatUserName + ':' + response.data[j].chatDate + ')' +
+                                                ' 既読:' + response.data[j].chatReaded + '、未読:' + response.data[j].chatNoread;
+                                            document.getElementById(("messagesList" + response.data[j].chatGroupId)).appendChild(li);
+
+                                            event.preventDefault();
+
+                                        }
+                                    })
+                                    .catch(error => {
+                                        this.resultJson = 'APIエラー：' + error
+                                    })
+
+
+                            }
+                        })
+                        .catch(error => {
+                            this.resultJson = 'APIエラー：' + error
+                        })
+                },
+                joinGroup(chatGroupId) {
+                    // 投稿する先のチャットグループを切り替え
+                    this.selectChatGroupId = chatGroupId;
+
+                },
+                getSendMsgt() {
+                    try {
+                        // チャットグループにメッセージを投稿
+                        connection.invoke("SendMessageToGroup", this.selectChatGroupId, this.chatMessage);
+                    }
+                    catch (e) {
+                        console.error(e.toString());
+                    }
+                    event.preventDefault();
+                }
+            }
+        }
+
+        vueAppMainMixinArray.push(myMixin);
+
+        const vueAppMain = Vue.createApp({
+            mixins: vueAppMainMixinArray,
+            data() {
+                return {
+                }
+            },
+            created() {
+                //this.getInitData();
+            }
+        }).mount('#vueAppMain')
+
+
+        const connection = new signalR.HubConnectionBuilder()
+            //.withUrl("/chatHub")
+            .withUrl("/chatHub", { accessTokenFactory: () => this.loginToken })
+            .build();
+        //connection.on("Send", function (message) {
+        //    var li = document.createElement("li");
+        //    li.textContent = message;
+        //    document.getElementById("messagesList").appendChild(li);
+        //});
+        //document.getElementById("groupmsg").addEventListener("click", async (event) => {
+        //    var groupName = document.getElementById("group-name").value;
+        //    var groupMsg = document.getElementById("group-message-text").value;
+        //    try {
+        //        await connection.invoke("SendMessageToGroup", groupName, groupMsg);
+        //    }
+        //    catch (e) {
+        //        console.error(e.toString());
+        //    }
+        //    event.preventDefault();
+        //});
+        //document.getElementById("join-group").addEventListener("click", async (event) => {
+        //    var groupName = document.getElementById("group-name").value;
+        //    try {
+        //        await connection.invoke("AddToGroup", groupName);
+        //    }
+        //    catch (e) {
+        //        console.error(e.toString());
+        //    }
+        //    event.preventDefault();
+        //});
+        //document.getElementById("leave-group").addEventListener("click", async (event) => {
+        //    var groupName = document.getElementById("group-name").value;
+        //    try {
+        //        await connection.invoke("RemoveFromGroup", groupName);
+        //    }
+        //    catch (e) {
+        //        console.error(e.toString());
+        //    }
+        //    event.preventDefault();
+        //});
+         //We need an async function in order to use await, but we want this code to run immediately,
+         //so we use an "immediately-executed async function"
+        (async () => {
+            try {
+                await connection.start();
+            }
+            catch (e) {
+                console.error(e.toString());
+            }
+        })();
+
+
+
+    </script>
+
+}

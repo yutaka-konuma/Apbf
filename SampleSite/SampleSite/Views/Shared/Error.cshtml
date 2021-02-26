@@ -1,0 +1,12 @@
+﻿@model ErrorViewModel
+@{ ViewData["Title"] = "Error"; }
+
+<h1 class="text-danger">致命的エラー</h1>
+<h2 class="text-danger">継続不可能な致命的なエラーが発生しました</h2>
+
+@if (Model.ShowRequestId)
+{
+<p>
+    <strong><code>@Model.RequestId</code></strong>
+</p>}
+

@@ -1,0 +1,88 @@
+﻿# ↓ システム共通文言
+
+msgid "Above Beyond Project Framework"
+msgstr "ABOVE BEYOND PROJECT FRAMEWORK"
+
+msgid "Account"
+msgstr "Account"
+
+msgid "SignOut"
+msgstr "SignOut"
+
+msgid "EditProfile"
+msgstr "EditProfile"
+
+msgid "SignIn"
+msgstr "SignIn"
+
+msgid "Language:"
+msgstr "Language:"
+
+# ↑ システム共通文言
+
+
+# ↓ メニュー表題
+
+msgid "Portal"
+msgstr "Portal"
+
+msgid "SearchSample"
+msgstr "SearchSample"
+
+# ↑ メニュー表題
+
+
+# ↓ ポータルで使用する文言
+
+msgid "PortalContentsMessage"
+msgstr "PortalContentsMessage"
+
+msgid "ControllerMessage"
+msgstr "ControllerMessage"
+
+msgid "ViewMessage"
+msgstr "ViewMessage"
+
+# ↑ ポータルで使用する文言
+
+# ↓ 検索サンプルで使用する文言
+
+msgid "Search"
+msgstr "Search"
+
+msgid "PostCd"
+msgstr "PostCd"
+
+msgid "Country"
+msgstr "Country"
+
+msgid "City"
+msgstr "City"
+
+msgid "Address"
+msgstr "Address"
+
+# ↑ 検索サンプルで使用する文言
+
+
+# ↓ その他
+
+msgid "Zip Code"
+msgstr "Zip Code"
+
+# ↑ その他
+
+
+# ↓ エラーメッセージ文言
+
+msgid "E00000"
+msgstr "No Message Error."
+
+msgid "E00001"
+msgstr "{0} field is required."
+
+msgid "E00002"
+msgstr "{0} field is {1} digits or less."
+
+# ↑ エラーメッセージ文言
+

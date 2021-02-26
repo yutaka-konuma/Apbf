@@ -1,0 +1,130 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
+
+@{
+    ViewData["Title"] = "メールサンプル";
+}
+
+@section Head{
+
+}
+
+
+<h1>@ViewData["Title"]</h1>
+
+<div id="vueAppMain">
+
+    <p>
+        <button @@click="this.getSendMsgt">メール送信テスト1</button>
+    </p>
+    <p>
+        <button @@click="this.getSendMsgt2">メール送信テスト2</button>
+    </p>
+    <p>
+        暗号化テスト：<input v-model="message" />
+        <button @@click="this.getEncrypt">入力文字列を暗号化</button>
+    </p>
+
+    {{ resultJson }}
+</div>
+
+@section Scripts {
+    <script>
+
+        var message;
+
+        document.readyState === 'complete' ? init() : window.onload = init;
+
+        function init() {
+
+            vueAppMain.getInitData();
+
+        }
+
+        const myMixin = {
+            data() {
+                return {
+                    selectChatGroupId: '',
+                    chatMessage: '',
+                    resultJson: ''
+                }
+            },
+            methods: {
+                getInitData() {
+                    this.resultJson = '初期データ取得中'
+                },
+                getSendMsgt() {
+                    try {
+                        this.resultJson = '問合せ中'
+
+                        // POST実行
+                        axios.post('/Api/MailSampleAPI/' + "1")
+                            .then(response => {
+                                this.resultJson = response.data
+                            })
+                            .catch(error => {
+                                this.resultJson = 'APIエラー：' + error
+                            })
+                    }
+                    catch (e) {
+                        console.error(e.toString());
+                    }
+                    event.preventDefault();
+                },
+                getSendMsgt2() {
+                    try {
+                        this.resultJson = '問合せ中'
+
+                        // POST実行
+                        axios.post('/Api/MailSampleAPI/' + "2")
+                            .then(response => {
+                                this.resultJson = response.data
+                            })
+                            .catch(error => {
+                                this.resultJson = 'APIエラー：' + error
+                            })
+                    }
+                    catch (e) {
+                        console.error(e.toString());
+                    }
+                    event.preventDefault();
+                },
+                getEncrypt() {
+                    try {
+                        this.resultJson = '問合せ中'
+
+                        // GET実行
+                        axios.get('/Api/MailSampleAPI/' + this.message)
+                            .then(response => {
+                                this.resultJson = response.data
+                            })
+                            .catch(error => {
+                                this.resultJson = 'APIエラー：' + error
+                            })
+                    }
+                    catch (e) {
+                        console.error(e.toString());
+                    }
+                    event.preventDefault();
+                }
+            }
+        }
+
+        vueAppMainMixinArray.push(myMixin);
+
+        const vueAppMain = Vue.createApp({
+            mixins: vueAppMainMixinArray,
+            data() {
+                return {
+                    message
+                }
+            },
+            created() {
+                //this.getInitData();
+            }
+        }).mount('#vueAppMain')
+    </script>
+}

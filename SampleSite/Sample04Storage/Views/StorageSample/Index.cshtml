@@ -1,0 +1,141 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
+
+@{
+    ViewData["Title"] = "ストレージサンプル";
+}
+
+@section Head{
+
+}
+
+
+<h1>@ViewData["Title"]</h1>
+
+<div id="vueAppMain">
+    {{ resultJson }}
+    <div id="theGrid"></div>
+
+    <p>
+        <input type="file" id="confirmFile" @@change="confirmFile" />
+        <button @@click="this.uploadFile">送信</button>
+    </p>
+
+</div>
+
+@section Scripts {
+    <script>
+
+        var columns = [
+            { binding: 'fileName', header: 'ファイル名', width: 250, },
+            { binding: 'lastModified', header: '更新日時', width: 250,  },
+            {
+                header: 'DL',
+                cellTemplate: wijmo.grid.cellmaker.CellMaker.makeButton({
+                    text: 'DL', // バインドされたテキストをオーバーライドします。
+                    click: (e, ctx) => {
+                        vueAppMain.downloadFile(ctx.item.fileName);
+                    }
+                })
+            },
+        ];
+        var grid;
+
+        document.readyState === 'complete' ? init() : window.onload = init;
+
+        function init() {
+            grid = new wijmo.grid.FlexGrid(
+                "#theGrid",
+                {
+                    autoGenerateColumns: false,
+                    allowSorting: false,
+                    showSort: false,
+                    headersVisibility: 'Column',
+                    columns: columns,
+                    itemsSource: [],
+                }
+            );
+
+            vueAppMain.getInitData();
+
+        }
+
+        const myMixin = {
+            data() {
+                return {
+                    file: "",
+                    resultJson: ''
+                }
+            },
+            methods: {
+                getInitData() {
+                    this.resultJson = '初期データ取得中'
+
+                    // GET実行
+                    axios.get('/StorageSample/GetStorageBlob/')
+                        .then(response => {
+                            this.resultJson = response.data.length + '件'
+                            grid.itemsSource = response.data;
+
+                        })
+                        .catch(error => {
+                            this.resultJson = 'APIエラー：' + error
+                        })
+                },
+                confirmFile(e) {
+                    this.resultJson = "";
+                    this.file = e.target.files[0];
+                },
+                uploadFile() {
+                    let data = new FormData();
+                    data.append("uploadFile", this.file);
+
+                    axios.post("/StorageSample/PutStorageBlob/", data)
+                        .then(response => {
+                            this.resultJson = response.data;
+                            this.file = "";
+                            confirmFile = "";
+                            this.getInitData();
+                        })
+                        .catch(err => {
+                            this.resultJson = err.response.data;
+                        });
+                },
+                downloadFile(filrName) {
+                    var link = document.createElement('a');
+                    link.download = filrName;
+                    link.href = "/StorageSample/DownloadStorageBlob/" + filrName;
+                    link.click();
+                },
+            }
+        }
+
+        function getFileName(contentDisposition) {
+            let fileName = contentDisposition.substring(contentDisposition.indexOf("''") + 2,
+                contentDisposition.length
+            );
+            //デコードするとスペースが"+"になるのでスペースへ置換します
+            fileName = decodeURI(fileName).replace(/\+/g, " ");
+
+            return fileName;
+        }
+
+        vueAppMainMixinArray.push(myMixin);
+
+        const vueAppMain = Vue.createApp({
+            mixins: vueAppMainMixinArray,
+            data() {
+                return {
+                }
+            },
+            created() {
+                //this.getInitData();
+            }
+        }).mount('#vueAppMain')
+
+    </script>
+
+}

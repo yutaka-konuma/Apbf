@@ -1,0 +1,106 @@
+﻿# ↓ システム共通文言
+
+msgid "Above Beyond Project Framework"
+msgstr "新フレームワーク開発"
+
+msgid "Account"
+msgstr "ログインユーザ："
+
+msgid "SignOut"
+msgstr "サインアウト"
+
+msgid "EditProfile"
+msgstr "アカウント編集"
+
+msgid "SignIn"
+msgstr "サインイン"
+
+msgid "Language:"
+msgstr "言語："
+
+# ↑ システム共通文言
+
+
+# ↓ メニュー表題
+
+msgid "Portal"
+msgstr "ポータル"
+
+msgid "SearchSample"
+msgstr "検索サンプル"
+
+# ↑ メニュー表題
+
+
+# ↓ ポータルで使用する文言
+
+msgid "PortalContentsMessage"
+msgstr "開発中のサンプルです。"
+
+msgid "ControllerMessage"
+msgstr "コントローラで変換した文言"
+
+msgid "ViewMessage"
+msgstr "ビューで変換した文言"
+
+# ↑ ポータルで使用する文言
+
+# ↓ 検索サンプルで使用する文言
+
+msgid "Search"
+msgstr "検索"
+
+msgid "PostCd"
+msgstr "郵便番号"
+
+msgid "Country"
+msgstr "都道府県"
+
+msgid "City"
+msgstr "市区町村"
+
+msgid "Address"
+msgstr "住所"
+
+msgid "Insert"
+msgstr "登録"
+
+msgid "Update"
+msgstr "更新"
+
+msgid "Delete"
+msgstr "削除"
+
+# ↑ 検索サンプルで使用する文言
+
+# ↓ 更新サンプルで使用する文言
+
+msgid "GoodsMaster"
+msgstr "商品マスタ"
+
+msgid "Detail"
+msgstr "詳細"
+
+# ↑ 更新サンプルで使用する文言
+
+# ↓ その他
+
+msgid "Zip Code"
+msgstr "郵便番号"
+
+# ↑ その他
+
+
+# ↓ エラーメッセージ文言
+
+msgid "E00000"
+msgstr "メッセージが登録されておりません。"
+
+msgid "E00001"
+msgstr "{0}を入力してください"
+
+msgid "E00002"
+msgstr "{0}は、{1}桁以内で入力してください。"
+
+# ↑ エラーメッセージ文言
+

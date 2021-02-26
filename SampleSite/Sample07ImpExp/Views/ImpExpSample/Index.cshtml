@@ -1,0 +1,158 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
+
+@{
+    ViewData["Title"] = "外部システム連携サンプル";
+}
+
+@section Head{
+
+}
+
+<br />
+<br />
+
+<h1>@ViewData["Title"]</h1>
+
+<div id="vueAppMain">
+
+    <p>
+        取込は以下の出力にて取得したファイルを、指定して取り込む事が可能です
+    </p>
+
+    <p>
+        <button @@click="this.exportCsvFile">csv出力</button>
+    </p>
+
+    <p>
+        <button @@click="this.exportXlsxFileDioDocs">xlsx出力(DioDocs)</button>
+    </p>
+
+    <p>
+        <button @@click="this.exportXlsxFileEPPlus">xlsx出力(EPPlus)</button>
+    </p>
+
+    <p>
+        <input type="file" id="impCsvFile" @@change="confirmCsvFile" />
+        <button @@click="this.importCsvFile">csv取込</button>
+    </p>
+
+    <p>
+        <input type="file" id="impXlsxFileDioDocs" @@change="confirmXlsxFileDioDocs" />
+        <button @@click="this.importXlsxFileDioDocs">xlsx取込(DioDocs)</button>
+    </p>
+
+    <p>
+        <input type="file" id="impXlsxFileEPPlus" @@change="confirmXlsxFileEPPlus" />
+        <button @@click="this.importXlsxFileEPPlus">xlsx取込(EPPlus)</button>
+    </p>
+
+    <p>
+        {{ resultJson }}
+    </p>
+
+</div>
+
+@section Scripts {
+    <script>
+
+        const myMixin = {
+            data() {
+                return {
+                    csvFile: "",
+                    xlsxFileDioDocs: "",
+                    xlsxFileEPPlus: "",
+                    resultJson: ''
+                }
+            },
+            methods: {
+                exportCsvFile() {
+                    var link = document.createElement('a');
+                    link.download = 'exportSample.csv';
+                    link.href = '/ImpExpSample/ExpCsv/';
+                    link.click();
+                },
+                exportXlsxFileDioDocs() {
+                    var link = document.createElement('a');
+                    link.download = 'exportSampleDioDocs.xlsx';
+                    link.href = '/ImpExpSample/ExpXlsxDioDocs/';
+                    link.click();
+                },
+                exportXlsxFileEPPlus() {
+                    var link = document.createElement('a');
+                    link.download = 'exportSampleEPPlus.xlsx';
+                    link.href = '/ImpExpSample/ExpXlsxEPPlus/';
+                    link.click();
+                },
+                confirmCsvFile(e) {
+                    this.resultJson = "";
+                    this.csvFile = e.target.files[0];
+                },
+                confirmXlsxFileDioDocs(e) {
+                    this.resultJson = "";
+                    this.xlsxFileDioDocs = e.target.files[0];
+                },
+                confirmXlsxFileEPPlus(e) {
+                    this.resultJson = "";
+                    this.xlsxFileEPPlus = e.target.files[0];
+                },
+                importCsvFile() {
+                    this.resultJson = 'Excelファイル取り込み中(Csv)'
+                    var data = new FormData();
+                    data.append("uploadFile", this.csvFile);
+
+                    axios.post("/ImpExpSample/ImpCsv/", data)
+                        .then(response => {
+                            this.resultJson = response.data;
+                        })
+                        .catch(err => {
+                            this.resultJson = err.response.data;
+                        });
+                },
+                importXlsxFileDioDocs() {
+                    this.resultJson = 'Excelファイル取り込み中(DioDocs)'
+                    var data = new FormData();
+                    data.append("uploadFile", this.xlsxFileDioDocs);
+
+                    axios.post("/ImpExpSample/ImpXlsxDioDocs/", data)
+                        .then(response => {
+                            this.resultJson = response.data;
+                        })
+                        .catch(err => {
+                            this.resultJson = err.response.data;
+                        });
+                },
+                importXlsxFileEPPlus() {
+                    this.resultJson = 'Excelファイル取り込み中(EPPlus)'
+                    var data = new FormData();
+                    data.append("uploadFile", this.xlsxFileEPPlus);
+
+                    axios.post("/ImpExpSample/ImpXlsxEPPlus/", data)
+                        .then(response => {
+                            this.resultJson = response.data;
+                        })
+                        .catch(err => {
+                            this.resultJson = err.response.data;
+                        });
+                },
+            }
+        }
+
+        vueAppMainMixinArray.push(myMixin);
+
+        const vueAppMain = Vue.createApp({
+            mixins: vueAppMainMixinArray,
+            data() {
+                return {
+                }
+            },
+            created() {
+            }
+        }).mount('#vueAppMain')
+
+    </script>
+
+}

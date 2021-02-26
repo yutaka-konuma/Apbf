@@ -1,0 +1,423 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
+
+@{
+    ViewData["Title"] = @Localizer["Basis"];
+}
+
+@section Head{
+
+}
+
+
+<h1>@ViewData["Title"]</h1>
+
+<div id="vueAppMain">
+    <p>
+        @Localizer["Basis"]
+        :
+        <input v-model="searchJobNo" /><button @@click="this.getResultJson">@Localizer["Search"]</button>{{ resultJson }}
+        <button @@click="this.openInsertForm">@Localizer["New"]</button>
+        <button @@click="this.execBulkUpdate">@Localizer["BulkUpdateTest"]</button>
+    </p>
+    <div id="theGrid"></div>
+    <div v-show="insertForm">
+        <p>@Localizer["JobNo"] : <input v-model="jobNo1" /> 必須、10桁以内</p>
+        <p>@Localizer["EstNo"] : <input v-model="estNo1" /> 任意、10桁以内</p>
+        <p>@Localizer["EstNoEda"] : <input v-model="estNoEda1" /> 任意、3桁以内</p>
+    </div>
+    <div v-show="updateForm">
+        <p>@Localizer["JobNo"] : <input readonly v-model="jobNo2" /></p>
+        <p>@Localizer["EstNo"] : <input v-model="estNo2" /> 任意、10桁以内</p>
+        <p>@Localizer["EstNoEda"] : <input v-model="estNoEda2" /> 任意、3桁以内</p>
+    </div>
+    <div id="childGrid"></div>
+    <div v-show="insertForm">
+        <p><button @@click="this.Insert">@Localizer["Insert"]</button></p>
+    </div>
+    <div v-show="updateForm">
+        <p>
+            <button @@click="this.Update">@Localizer["Update"]</button>
+            <button @@click="this.Delete">@Localizer["Delete"]</button>
+        </p>
+    </div>
+</div>
+
+@section Scripts {
+    <script type="text/javascript">
+        // グリッドのカラム指定
+        var columns = [
+            { binding: 'jobNo', header: '@Localizer["JobNo"]' },
+            { binding: 'estNo', header: '@Localizer["EstNo"]' },
+            { binding: 'estNoEda', header: '@Localizer["EstNoEda"]' },
+            {
+                // カスタムセルでボタン表示
+                header: '@Localizer["Detail"]',
+                cellTemplate: wijmo.grid.cellmaker.CellMaker.makeButton({
+                    text: '@Localizer["Detail"]', // バインドされたテキストをオーバーライドします。
+                    click: (e, ctx) => {
+                        // 選択行を画面に反映
+                        vueAppMain.insertForm = false;
+                        vueAppMain.updateForm = true;
+                        vueAppMain.jobNo2 = ctx.item.jobNo;
+                        vueAppMain.estNo2 = ctx.item.estNo;
+                        vueAppMain.estNoEda2 = ctx.item.estNoEda;
+                        vueAppMain.getChildResultJson();
+                        $("#childGrid").show();
+                    }
+                })
+            },
+        ];
+
+        // コンボボックスの仮データ
+        var pkKbn = [
+            { pkKbn: '1', pkName: 'PK_1' },
+            { pkKbn: '2', pkName: 'PK_22' },
+            { pkKbn: '3', pkName: 'PK_333' },
+        ];
+        // create customer data map
+        var pkKbnMap = new wijmo.grid.DataMap(pkKbn, 'pkKbn', 'pkName');
+        // グリッドのカラム指定
+        var childColumns = [
+            { binding: 'cargoSeq', header: '@Localizer["CargoSeq"]' },
+            { binding: 'netWeight', header: '@Localizer["NetWeight"]', align: "right" },
+            { binding: 'pgKbn', header: '@Localizer["PgKbn"]', align: "center", dataMap: pkKbnMap },
+            { binding: 'fpointUnitKbn', header: '@Localizer["FpointUnitKbn"]', align: "center" },
+            { binding: 'nosKbn', header: '@Localizer["NosKbn"]', align: "center" },
+            { binding: 'mpKbn', header: '@Localizer["MpKbn"]', align: "center", cssClass: 'switch'},
+            {
+                binding: 'sysEntDate', header: '@Localizer["SysEntDate"]', format: 'yyyy/MM/dd', isRequired: false, width: 130,
+                editor: new wijmo.input.InputDate(document.createElement('div'), {
+                    format: 'yyyy/MM/dd',
+                    isRequired: false
+                })
+            },
+            {
+                binding: 'sysEntTime', header: '@Localizer["SysEntTime"]', format: 'HH:mm:ss.fff', isRequired: false, width: 95,
+                editor: new wijmo.input.InputTime(document.createElement('div'), {
+                    format: 'HH:mm:ss.fff',
+                    step: 30,
+                    isEditable: true,
+                    isRequired: false
+                })
+            },
+        ];
+
+        var grid;
+        var childGrid;
+
+        document.readyState === 'complete' ? init() : window.onload = init;
+
+        function init() {
+            // グリッドの初期処理
+            grid = new wijmo.grid.FlexGrid(
+                "#theGrid",
+                {
+                    autoGenerateColumns: false,
+                    allowSorting: false,
+                    showSort: false,
+                    headersVisibility: 'Column',
+                    columns: columns,
+                    itemsSource: [],
+                }
+            );
+            // グリッドの初期処理
+            childGrid = new wijmo.grid.FlexGrid(
+                "#childGrid",
+                {
+                    //　変更追跡する
+                    showMarquee: true,
+                    //　行追加削除を許す
+                    allowAddNew: true,
+                    allowDelete: true,
+                    autoGenerateColumns: false,
+                    allowSorting: false,
+                    showSort: false,
+                    // 削除のため行選択にする　deleteキーで削除
+                    headersVisibility: 'All',
+                    columns: childColumns,
+                    itemsSource: [],
+                }
+            );
+            $("#childGrid").hide();
+        }
+
+        const myMixin = {
+            data() {
+                return {
+                    searchJobNo: '',
+                    resultJson: ''
+                }
+            },
+            methods: {
+                // 一括更新テストボタンクリック時にストアドプロシージャを実行します。
+                execBulkUpdate() {
+                    this.resultJson = '問合せ中';
+
+                    // 更新画面のJOBNOを渡す
+
+                    // Post実行
+                    axios.post('​/api​/BasisAPI​/StoredProcedureTest​/' + this.searchJobNo)
+                        .then(response => {
+                            this.resultJson = "戻り値：" + response.data;
+                            alert("ストアドプロシージャで更新しました。");
+                        })
+                        .catch(error => {
+                            this.resultJson = 'APIエラー：' + error;
+                        })
+                },
+                clearForm() {
+                    this.jobNo1 = "";
+                    this.estNo1 = "";
+                    this.estNoEda1 = "";
+                    this.jobNo2 = "";
+                    this.estNo2 = "";
+                    this.estNoEda2 = "";
+                    childGrid.collectionView.trackChanges = false;
+                    this.getChildResultJson();
+                    childGrid.collectionView.trackChanges = true;
+                },
+                // ボタンクリック時に行のデータを表示します。
+                getResultJson() {
+                    this.insertForm = false;
+                    this.updateForm = false;
+                    this.resultJson = '問合せ中';
+
+                    // POSTするパラメータは手動設定
+                    let params = new URLSearchParams();
+                    params.append('searchJobNo', this.searchJobNo);
+
+                    // Get実行
+                    axios.get('/Api/BasisAPI/' + this.searchJobNo)
+                        .then(response => {
+                            this.resultJson = response.data.length + '件';
+                            grid.itemsSource = response.data;
+                        })
+                        .catch(error => {
+                            this.resultJson = 'APIエラー：' + error;
+                        })
+                    this.clearForm();
+                    $("#childGrid").hide();
+                },
+                // ボタンクリック時にInsertFormを表示します。
+                openInsertForm() {
+                    this.insertForm = true;
+                    this.updateForm = false;
+                    this.clearForm();
+                    $("#childGrid").show();
+                },
+                // 登録
+                Insert() {
+                    this.resultJson = '';
+                    /*
+                    if (this.checkForm()) {
+                        return 0;
+                    }
+                    */
+                    let axiosConfig = {
+                        headers: {
+                            'accept': 'text/plain',
+                            'Content-Type': 'application/json;charset=UTF-8',
+                        }
+                    };
+
+                    // 編集行データ取得
+                    var itemsEdited = [];
+                    for (let i = 0; i < childGrid.collectionView.itemsEdited.length; i++) {
+                        itemsEdited.push(childGrid.collectionView.itemsEdited[i]);
+                    }
+                    // 追加行データ取得
+                    var itemsAdded = [];
+                    for (let i = 0; i < childGrid.collectionView.itemsAdded.length; i++) {
+                        itemsAdded.push(childGrid.collectionView.itemsAdded[i]);
+                    }
+                    // 削除行データ取得
+                    var itemsRemoved = [];
+                    for (let i = 0; i < childGrid.collectionView.itemsRemoved.length; i++) {
+                        itemsRemoved.push(childGrid.collectionView.itemsRemoved[i]);
+                    }
+                    // 編集行データ変換
+                    ConvertRequest(itemsEdited);
+                    // 追加行データ変換
+                    ConvertRequest(itemsAdded);
+                    // 削除行データ変換
+                    ConvertRequest(itemsRemoved);
+                    // データ取得
+                    const data = {
+                        "jobNo": this.jobNo1,
+                        "estNo": this.estNo1,
+                        "estNoEda": this.estNoEda1,
+                        "itemsEdited": itemsEdited,
+                        "itemsAdded": itemsAdded,
+                        "itemsRemoved": itemsRemoved,
+                    }
+
+                    this.resultJson = '問合せ中(Post)';
+                    // POST実行
+                    axios.post('/api/BasisAPI/Insert', data, axiosConfig)
+                        .then(response => {
+                            this.resultJson = response.data + '件登録しました';
+                            this.getResultJson();
+                        })
+                        .catch(error => {
+                            console.log(JSON.stringify(error.data.errors));
+                            this.resultJson = 'Rest Api Error Return Code： ' + error.data.status;
+                            this.errors = error.data.errors;
+                        })
+                },
+                // 更新
+                Update() {
+                    this.resultJson = '';
+                    /*
+                    if (this.checkForm()) {
+                        return 0;
+                    }
+                    */
+                    let axiosConfig = {
+                        headers: {
+                            'accept': 'text/plain',
+                            'Content-Type': 'application/json;charset=UTF-8',
+                        }
+                    };
+
+                    // 編集行データ取得
+                    var itemsEdited = [];
+                    for (let i = 0; i < childGrid.collectionView.itemsEdited.length; i++) {
+                        itemsEdited.push(childGrid.collectionView.itemsEdited[i]);
+                    }
+                    // 追加行データ取得
+                    var itemsAdded = [];
+                    for (let i = 0; i < childGrid.collectionView.itemsAdded.length; i++) {
+                        itemsAdded.push(childGrid.collectionView.itemsAdded[i]);
+                    }
+                    // 削除行データ取得
+                    var itemsRemoved = [];
+                    for (let i = 0; i < childGrid.collectionView.itemsRemoved.length; i++) {
+                        itemsRemoved.push(childGrid.collectionView.itemsRemoved[i]);
+                    }
+                    // 編集行データ変換
+                    ConvertRequest(itemsEdited);
+                    // 追加行データ変換
+                    ConvertRequest(itemsAdded);
+                    // 削除行データ変換
+                    ConvertRequest(itemsRemoved);
+                    const data = {
+                        "jobNo": this.jobNo2,
+                        "estNo": this.estNo2,
+                        "estNoEda": this.estNoEda2,
+                        "itemsEdited": itemsEdited,
+                        "itemsAdded": itemsAdded,
+                        "itemsRemoved": itemsRemoved,
+                    }
+
+                    this.resultJson = '問合せ中(Put)';
+                    // Put実行
+                    axios.post('/api/BasisAPI/Update', data, axiosConfig)
+                        .then(response => {
+                            this.resultJson = response.data + '件更新しました';
+                            this.getResultJson();
+                        })
+                        .catch(error => {
+                            console.log(JSON.stringify(error.data.errors));
+                            this.resultJson = 'Rest Api Error Return Code： ' + error.data.status;
+                            this.errors = error.data.errors;
+                        })
+                },
+                // 削除
+                Delete() {
+                    this.resultJson = '';
+                    /*
+                    if (this.checkForm()) {
+                        return 0;
+                    }
+                    */
+
+                    this.resultJson = '問合せ中(Delete)';
+                    // Delete実行
+                    axios.post('/api/BasisAPI/Delete/' + this.jobNo2)
+                        .then(response => {
+                            this.resultJson = response.data + '件削除しました';
+                            this.getResultJson();
+                        })
+                        .catch(error => {
+                            console.log(JSON.stringify(error.data.errors));
+                            this.resultJson = 'Rest Api Error Return Code： ' + error.data.status;
+                            this.errors = error.data.errors;
+                        })
+                },
+                // 詳細ボタンクリック時に貨物データを表示します。
+                getChildResultJson() {
+                    this.resultJson = '問合せ中';
+
+                    // 更新画面のJOBNOを渡す
+
+                    // Get実行
+                    axios.get('/api/BasisAPI/GetCargo/' + this.jobNo2)
+                        .then(response => {
+                            this.resultJson = response.data.length + '件';
+                            ConvertResponse(response.data);
+                            childGrid.itemsSource = response.data;
+                            childGrid.collectionView.trackChanges = true;
+                        })
+                        .catch(error => {
+                            this.resultJson = 'APIエラー：' + error;
+                        })
+                },
+            },
+        }
+
+        vueAppMainMixinArray.push(myMixin);
+
+        const vueAppMain = Vue.createApp({
+            mixins: vueAppMainMixinArray,
+            data() {
+                return {
+                    // 画面コントロール一覧
+                    insertForm: false,
+                    updateForm: false,
+                    jobNo1: "",
+                    estNo1: "",
+                    estNoEda1: "",
+                    jobNo2: "",
+                    estNo2: "",
+                    estNoEda2: "",
+                }
+            },
+            created() {
+            }
+        }).mount('#vueAppMain');
+
+        // JavaScript関数
+
+        // データ内のBoolを文字に変換
+        // データ内の日付をYYYYMMDDに変換
+        function ConvertRequest(data) {
+            try {
+                for (let i = 0; i < data.length; i++) {
+                    data[i].nosKbn = (data[i].nosKbn ? "1" : "0");
+                    data[i].mpKbn = (data[i].mpKbn ? "1" : "0");
+                    data[i].sysEntDate = DateToYYYYMMDD(data[i].sysEntDate);
+                    data[i].sysEntTime = TimeToHHMMSSFFF(data[i].sysEntTime);
+                }
+            }
+            catch (e) {
+                console.error(e.toString());
+            }
+        }
+
+        // データ内のYYYYMMDDを日付に変換
+        function ConvertResponse(data) {
+            try {
+                for (let i = 0; i < data.length; i++) {
+                    data[i].nosKbn = (data[i].nosKbn == "1");
+                    data[i].mpKbn = (data[i].mpKbn == "1");
+                    data[i].sysEntDate = YYYYMMDDToDate(data[i].sysEntDate);
+                    data[i].sysEntTime = HHMMSSFFFToTime(data[i].sysEntTime);
+                }
+            }
+            catch (e) {
+                console.error(e.toString());
+            }
+        }
+    </script>
+}

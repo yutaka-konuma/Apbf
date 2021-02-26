@@ -1,0 +1,30 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30907.101
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AbpfUtil", "AbpfUtil\AbpfUtil.csproj", "{3E54BF38-442C-47D9-B0E7-96F3FA987AAE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2CC84E19-67A6-4D73-9EAE-3C3C9FD3914D}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3E54BF38-442C-47D9-B0E7-96F3FA987AAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E54BF38-442C-47D9-B0E7-96F3FA987AAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E54BF38-442C-47D9-B0E7-96F3FA987AAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3E54BF38-442C-47D9-B0E7-96F3FA987AAE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E013EBBE-1436-4716-A811-C636E5B4CA73}
+	EndGlobalSection
+EndGlobal
